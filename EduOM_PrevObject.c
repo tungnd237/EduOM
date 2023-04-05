@@ -87,8 +87,59 @@ Four EduOM_PrevObject(
     
     if (prevOID == NULL) ERR(eBADOBJECTID_OM);
 
-    
+    if (curOID != NULL) {
+        pid.pageNo = curOID->pageNo;
+        pid.volNo = curOID->volNo;
+    } else {
+        e = BfM_GetTrain((TrainID*)catObjForFile, (char**)&catPage, PAGE_BUF);
+        if (e < 0) ERR(e);
 
+        GET_PTR_TO_CATENTRY_FOR_DATA(catObjForFile, catPage, catEntry);
+        pid.pageNo = catEntry->lastPage;
+        pid.volNo = catEntry->fid.volNo;
+        
+        e = BfM_FreeTrain((TrainID*)catObjForFile, PAGE_BUF);
+        if (e < 0) ERR(e);
+    }
+
+    while (pid.pageNo != NIL) {
+        e = BfM_GetTrain(&pid, &apage, PAGE_BUF);        
+        if (e < 0) ERR( e );
+
+        if (curOID != NULL) {
+            i = curOID->slotNo - 1;
+        } else {
+            i = apage->header.nSlots - 1;
+        }
+
+        for (; i >= 0; i--) {
+            if (apage->slot[-i].offset != EMPTYSLOT) {
+                obj = &apage->data[apage->slot[-i].offset];
+                if (objHdr != NULL) {
+                    objHdr->length = obj->header.length;
+                    objHdr->tag = obj->header.tag;
+                    objHdr->properties = obj->header.properties;
+                }
+                
+                prevOID->volNo = pid.volNo;
+                prevOID->unique = apage->slot[-i].unique;
+                prevOID->pageNo = pid.pageNo;
+                prevOID->slotNo = i;
+
+                e = BfM_FreeTrain(&pid, PAGE_BUF);
+                if (e < 0) ERR(e);
+
+                return(eNOERROR);
+            }   
+        }
+
+        curOID = NULL;
+        pageNo = apage->header.prevPage;
+
+        e = BfM_FreeTrain(&pid, PAGE_BUF);
+        if (e < 0) ERR(e);
+        pid.pageNo = pageNo;
+    }
     return(EOS);
     
 } /* EduOM_PrevObject() */

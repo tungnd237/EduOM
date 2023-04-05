@@ -87,6 +87,30 @@ Four EduOM_CompactPage(
     Two    lastSlot;		/* last non empty slot */
     Two    i;			/* index variable */
 
+    memcpy(&tpage, apage, PAGESIZE);
+
+    apageDataOffset = 0;
+    len = 0;
+    for (i = 0; i < tpage.header.nSlots; i++) {
+        if (tpage.slot[-i].offset != EMPTYSLOT && i != slotNo) {
+            obj = tpage.data + tpage.slot[-i].offset;
+            len = ALIGNED_LENGTH(obj->header.length + sizeof(ObjectHdr));     
+            apage->slot[-i].offset = apageDataOffset;
+            memcpy(apage->data + apageDataOffset, obj, len);
+            apageDataOffset += len;
+        }
+    }
+
+    if (slotNo != NIL) {
+        obj = tpage.data + tpage.slot[-slotNo].offset;
+        len = ALIGNED_LENGTH(obj->header.length + sizeof(ObjectHdr)); 
+        memcpy(apage->data + apageDataOffset, obj, len);
+        apage->slot[-slotNo].offset = apageDataOffset;
+        apageDataOffset += len;
+    }
+
+    apage->header.unused = 0;
+    apage->header.free = apageDataOffset;
     
 
     return(eNOERROR);

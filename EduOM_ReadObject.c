@@ -108,7 +108,20 @@ Four EduOM_ReadObject(
     
     if (buf == NULL) ERR(eBADUSERBUF_OM);
 
-    
+    pid.pageNo = oid->pageNo;
+    pid.volNo = oid->volNo;
+    e = BfM_GetTrain(&pid, (char**)&apage, PAGE_BUF);
+    if (e < 0) ERR( e );
+
+    e = IS_VALID_OBJECTID(oid, apage);
+    if (e = 0) ERR( e );
+    offset = apage->slot[-(oid->slotNo)].offset;
+    obj = (Object*)&(apage->data[offset]);
+
+    length = length == REMAINDER ? obj->header.length - start : length;
+    strncpy(buf, &(obj->data[start]), length);
+
+    BfM_FreeTrain(&pid, PAGE_BUF);
 
     return(length);
     
