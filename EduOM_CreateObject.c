@@ -101,17 +101,17 @@ Four EduOM_CreateObject(
 
     if (length > 0 && data == NULL) return(eBADUSERBUF_OM);
 
-	/* Error check whether using not supported functionality by EduOM */
-	if(ALIGNED_LENGTH(length) > LRGOBJ_THRESHOLD) ERR(eNOTSUPPORTED_EDUOM);
+        /* Error check whether using not supported functionality by EduOM */
+        if(ALIGNED_LENGTH(length) > LRGOBJ_THRESHOLD) ERR(eNOTSUPPORTED_EDUOM);
     
     objectHdr.length = 0;
     objectHdr.tag = 0;
     if (objHdr != NULL) {
         objectHdr.tag = objHdr->tag;
     }
-
     objectHdr.properties = 0x0;
    
+    /* Call eduom_CreateObject() to insert an object into the page */
     e = eduom_CreateObject(catObjForFile, nearObj, &objectHdr, length, data, oid);
     if(e < 0) ERR(e);
     
@@ -177,8 +177,10 @@ Four eduom_CreateObject(
     
     if (objHdr == NULL) ERR(eBADOBJECTID_OM);
     
-    /* Error check whether using not supported functionality by EduOM */
-    if(ALIGNED_LENGTH(length) > LRGOBJ_THRESHOLD) ERR(eNOTSUPPORTED_EDUOM);
+        /* Error check whether using not supported functionality by EduOM */
+        if(ALIGNED_LENGTH(length) > LRGOBJ_THRESHOLD) ERR(eNOTSUPPORTED_EDUOM);
+
+    /* get the buffer containing the catalog */
     e = BfM_GetTrain((TrainID*)catObjForFile, (char**)&catPage, PAGE_BUF);
     if (e < 0) ERR( e );
 
@@ -194,6 +196,7 @@ Four eduom_CreateObject(
     
     pageSelected = FALSE;
 
+    /* select the page to insert the object */
     if (nearObj == NULL) {
         if (pageSelected == FALSE) {
             pid.pageNo = catEntry->lastPage;
